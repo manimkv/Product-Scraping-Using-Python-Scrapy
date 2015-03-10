@@ -8,23 +8,22 @@ import csv
 from time import sleep
 
 class ChennaibasketSpider(Spider):
-    name = "ibuyfresh"
-    allowed_domains = ["ibuyfresh.com"]
+    name = "mrmust"
+    allowed_domains = ["mrmust.com"]
     start_urls = (
-        'http://www.ibuyfresh.com/',
+        'http://www.mrmust.com/',
     )   
 
     def parse(self, response):
         sel = Selector(response)
         self.today = date.today().strftime('%d-%m-%Y')
         xp = lambda x: sel.xpath(x)
-        self.csv_file_header = 'ibuyfresh'
-        cat_list = {'Fruits': 'Fruits', 'Vegetables': 'Vegetables', 'Organic': 'Organic', 'Grocery': 'Grocery', 'Bread & Dairy': 'Bread-Dairy-and-Frozen', 'Branded Foods': 'Branded-Foods', 'Personal Care': 'Personal-Care', 'House Hold': 'House-Hold'}
-        
-        for x in xp("//*[@class='title-cntr']"):
-            self.category = x.xpath('.//span//text()').extract()[0]
-            if self.category not in ['Recipes', 'Quick Shop', 'Help']:
-                yield Request('%s%s' % (response.url, cat_list[self.category]), meta={'csv_file': self.category}, callback=self.parse_url)
+        self.csv_file_header = 'mrmust'
+
+        for cat in xp("//*[@class='cbp-hrsub']"):
+            for url in cat.xpath('.//@href').extract():
+                
+                yield Request(url, meta={'csv_file': self.category}, callback=self.parse_url)
 
 
     def parse_url(self, response):

@@ -19,7 +19,8 @@ class ChennaibasketSpider(Spider):
         sel = Selector(response)
         self.today = date.today().strftime('%d-%m-%Y')
         xp = lambda x: sel.xpath(x)
-        
+        self.csv_file_header = 'chennaibasket'
+
         for x in xp("//*[@class='tlli mkids']"):
             fetch_url = x.re('<a class="tll" href="(.*)"')
             yield Request(fetch_url[0], callback=self.parse_url)
@@ -30,7 +31,7 @@ class ChennaibasketSpider(Spider):
         xp = lambda x: sel.xpath(x)
         rest_pages = list(set(xp("//*[@class='links']//@href").extract()))
         rest_pages.append('%s?page=1' % response.url)
-        self.category = open('%s.csv' % response.url.split('/')[-1], 'wb')
+        self.category = open('%s_%s.csv' % (self.csv_file_header, response.url.split('/')[-1]), 'wb')
         csv_writer = csv.writer(self.category)
         csv_writer.writerow(['date', 'product with quantity', 'price'])
 
