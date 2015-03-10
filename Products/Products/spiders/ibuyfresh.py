@@ -7,7 +7,7 @@ from datetime import date
 import csv
 from time import sleep
 
-class ChennaibasketSpider(Spider):
+class IbuyfreshSpider(Spider):
     name = "ibuyfresh"
     allowed_domains = ["ibuyfresh.com"]
     start_urls = (
@@ -28,6 +28,7 @@ class ChennaibasketSpider(Spider):
 
 
     def parse_url(self, response):
+        log.msg('Processing %s'%response.url)
         sel = Selector(response)
         xp = lambda x: sel.xpath(x)
         csv_category = open('%s_%s.csv' % (self.csv_file_header, response.meta['csv_file']), 'wb')

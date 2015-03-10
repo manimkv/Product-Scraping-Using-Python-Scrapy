@@ -5,9 +5,11 @@ from scrapy.selector import Selector
 from scrapy.http.request import Request
 from datetime import date
 import csv
-from time import sleep
+import re
+from itertools import izip
 
-class ChennaibasketSpider(Spider):
+
+class MrmustSpider(Spider):
     name = "mrmust"
     allowed_domains = ["mrmust.com"]
     start_urls = (
@@ -21,33 +23,24 @@ class ChennaibasketSpider(Spider):
         self.csv_file_header = 'mrmust'
 
         for cat in xp("//*[@class='cbp-hrsub']"):
-            for url in cat.xpath('.//@href').extract():
-                
-                yield Request(url, meta={'csv_file': self.category}, callback=self.parse_url)
+            url_part = re.findall('.com/(.*)/', cat.xpath('.//@href').extract()[0])[0]
+            yield Request('%s%s' % (response.url, url_part), meta={'csv_file': re.search('\w+', url_part).group()}, callback=self.parse_url)
 
 
     def parse_url(self, response):
         sel = Selector(response)
+        log.msg('Processing %s' % response.url)
         xp = lambda x: sel.xpath(x)
         csv_category = open('%s_%s.csv' % (self.csv_file_header, response.meta['csv_file']), 'wb')
         csv_writer = csv.writer(csv_category)
-        csv_writer.writerow(['date', 'brand', 'product', 'quantity', 'price'])
-
-        for item in xp("//*[@class='prod-item']"):
-            product = item.re('alt="(.*)"')[0].strip()
-            brand = item.xpath('.//*[@class="avail-at"]//text()').extract()[0].strip()
-            try:
-                price = item.xpath('.//*[@class="fa fa-inr tar"]//text()').extract()[0]
-            except IndexError:
-                price = item.xpath('.//*[@class="fa fa-inr tal"]//text()').extract()[0]
-            product = product.encode('ascii', 'ignore')
-            try:
-                quantity = item.xpath('.//p/text()').extract()[0]
-            except IndexError:
-                quantity = item.re('"&nbsp;(\d+\w*)"')[0]
-            price = price.encode('ascii', 'ignore')
-            csv_writer.writerow([self.today, brand, product, quantity, price])
-
+        csv_writer.writerow(['date', 'product with quantity', 'price'])
+        products = zip(xp("//*[@class='li_product_name']"), xp('//*[@class="li_quantity"]'))
+ 
+        for name_obj, price_obj in products:
+            name = name_obj.xpath('.//@title').extract()[0]
+            price = price_obj.xpath('.//span//text()').extract()[-1]
+            csv_writer.writerow([self.today, name, price])
+        
         return
-                 
+
 

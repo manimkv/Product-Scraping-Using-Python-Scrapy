@@ -27,6 +27,7 @@ class ChennaibasketSpider(Spider):
 
 
     def parse_url(self, response):
+        log.msg('Processing %s'%response.url)
         sel = Selector(response)
         xp = lambda x: sel.xpath(x)
         rest_pages = list(set(xp("//*[@class='links']//@href").extract()))
