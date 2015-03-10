@@ -31,16 +31,17 @@ class ChennaibasketSpider(Spider):
         rest_pages = list(set(xp("//*[@class='links']//@href").extract()))
         rest_pages.append('%s?page=1' % response.url)
         self.category = open('%s.csv' % response.url.split('/')[-1], 'wb')
-        self.csv_writer = csv.writer(self.category)
-        self.csv_writer.writerow(['date', 'product with quantity', 'price'])
+        csv_writer = csv.writer(self.category)
+        csv_writer.writerow(['date', 'product with quantity', 'price'])
 
         for page_url in rest_pages:
-            yield Request(page_url, callback=self.parse_page)            
+            yield Request(page_url, meta={'writer_obj': csv_writer}, callback=self.parse_page)            
 
 
     def parse_page(self, response):
         sel = Selector(response)
         xp = lambda x: sel.xpath(x)
+        csv_writer = response.meta['writer_obj']
 
         for x in xp('//*[@class="three mobile-two columns"]'):
             try:
@@ -48,10 +49,8 @@ class ChennaibasketSpider(Spider):
             except IndexError:
                 price = x.xpath('.//*[@class="price"]//text()').extract()[0].replace('\n', '').strip()
             product = x.xpath('.//*[@class="name"]//text()').extract()[0]
-            try:
-                self.csv_writer.writerow([self.today, product, price])
-            except UnicodeEncodeError:
-                self.csv_writer.writerow([self.today, product.encode('ascii', 'ignore'), price])
+            product = product.encode('ascii', 'ignore')
+            csv_writer.writerow([self.today, product, price])
         
         return
                  
