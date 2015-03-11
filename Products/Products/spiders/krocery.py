@@ -42,6 +42,7 @@ class KrocerySpider(Spider):
             for sub_category_url_part in xp(head_xpath).extract():
                 yield Request('%s%s' % (response.meta['master_url'], sub_category_url_part[1:]), meta={'writer_obj': csv_writer}, callback=self.parse_item)
      
+     
     def parse_item(self, response):
         sel = Selector(response)
         xp = lambda x: sel.xpath(x)
